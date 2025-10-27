@@ -3,22 +3,49 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
-      base_url:
-        description: "Escolha o ambiente de testes(local, homolog, produção)"
+      environment:
+        description: "Escolha o ambiente de testes (local, homolog, producao)"
         required: true
-        default: "http://localhost:3000"
+        default: "local"
 
 jobs:
   tests:
     runs-on: ubuntu-latest
+
+    env:
+      # URLs dos ambientes
+      URL_LOCAL: http://localhost:3000
+      URL_HOMOLOG: https://bikeboard-homolog.vercel.app/
+      URL_PRODUCAO: https://app.seusistema.com
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Definir URL base conforme ambiente
+        id: set-url
+        run: |
+          echo "Ambiente selecionado: ${{ github.event.inputs.environment }}"
+          case "${{ github.event.inputs.environment }}" in
+            local)
+              echo "BASE_URL=${{ env.URL_LOCAL }}" >> $GITHUB_ENV
+              ;;
+            homolog)
+              echo "BASE_URL=${{ env.URL_HOMOLOG }}" >> $GITHUB_ENV
+              ;;
+            producao)
+              echo "BASE_URL=${{ env.URL_PRODUCAO }}" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Ambiente inválido. Use: local, homolog ou producao."
+              exit 1
+              ;;
+          esac
+
       - name: Cypress run
         uses: cypress-io/github-action@v6
         env:
-          BASE_URL: ${{ github.event.inputs.base_url }}
+          BASE_URL: ${{ env.BASE_URL }}
         with:
           start: npm start
           browser: chrome
