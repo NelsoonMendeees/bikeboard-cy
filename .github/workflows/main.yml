@@ -3,10 +3,14 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
-      environment:
+      base_url:
         description: "Escolha o ambiente de testes (local, homolog, producao)"
         required: true
         default: "local"
+      browser:
+        description: "Escolha o navegador para os testes (chrome, firefox, electron)"
+        required: true
+        default: "chrome"
 
 jobs:
   tests:
@@ -25,8 +29,8 @@ jobs:
       - name: Definir URL base conforme ambiente
         id: set-url
         run: |
-          echo "Ambiente selecionado: ${{ github.event.inputs.environment }}"
-          case "${{ github.event.inputs.environment }}" in
+          echo "Ambiente selecionado: ${{ github.event.inputs.base_url }}"
+          case "${{ github.event.inputs.base_url }}" in
             local)
               echo "BASE_URL=${{ env.URL_LOCAL }}" >> $GITHUB_ENV
               ;;
@@ -48,7 +52,7 @@ jobs:
           BASE_URL: ${{ env.BASE_URL }}
         with:
           start: npm start
-          browser: chrome
+          browser: ${{ github.event.inputs.browser }}
 
       - name: Upload Screenshots
         uses: actions/upload-artifact@v4
